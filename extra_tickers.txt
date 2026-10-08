@@ -1,0 +1,2 @@
+# Apne extra US tickers yahan likho (space ya comma se alag). Example:
+# PLTR SOFI HOOD COIN
