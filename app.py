@@ -71,9 +71,13 @@ with tab_scan:
     res = st.session_state.get("scan_res")
     if res is not None:
         ok = st.session_state["scan_ok"]
-        st.success("🟢 Market OK: SPY 200 SMA ke upar") if ok else st.error("🔴 Market weak: SPY 200 SMA ke neeche")
+        if ok:
+            st.success("🟢 Market OK: SPY 200 SMA ke upar")
+        else:
+            st.error("🔴 Market weak: SPY 200 SMA ke neeche (Settings me Market filter band karke bhi dekh sakte ho)")
+        st.caption(f"{len(st.session_state['scan_prices']) - 1} stocks ka data aaya aur scan hua")
         if res.empty:
-            st.info("Aaj koi setup nahi mila.")
+            st.info("Aaj in rules par koi setup nahi mila. Settings me 'Min RS vs SPY' ghatao ya 'Min avg $ volume' kam karo.")
         else:
             st.subheader(f"{len(res)} suggestions")
             for r in res.head(15).itertuples():
@@ -104,7 +108,10 @@ with tab_scan:
 
         if st.button("📨 Telegram par bhejo", use_container_width=True):
             okk, msg = send_telegram(format_message(res, ok))
-            (st.success if okk else st.error)(msg)
+            if okk:
+                st.success(msg)
+            else:
+                st.error(msg)
 
 # ---------------- backtest
 with tab_bt:
