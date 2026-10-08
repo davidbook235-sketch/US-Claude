@@ -53,11 +53,25 @@ def get_sp500():
     return [_clean(x) for x in t[0]["Symbol"].tolist()]
 
 
+NASDAQ100_BACKUP = (
+    "AAPL MSFT NVDA AMZN GOOGL GOOG META AVGO TSLA COST NFLX AMD ADBE PEP CSCO TMUS INTU QCOM TXN AMGN "
+    "AMAT ISRG BKNG HON VRTX PANW ADP GILD MU LRCX SBUX ADI MELI KLAC SNPS CDNS CRWD MRVL ORLY ABNB FTNT "
+    "ASML REGN MDLZ PYPL CTAS CEG DASH WDAY ADSK PDD CHTR MAR CPRT PCAR NXPI MNST ROP AEP FANG PAYX AZN "
+    "KDP ODFL FAST ROST KHC EA VRSK CTSH GEHC DDOG XEL EXC LULU CCEP IDXX TTWO BKR ON CSGP DXCM BIIB TEAM "
+    "ZS GFS MDB CDW WBD ARM APP PLTR TRI AXON SHOP LIN MSTR TTD CSX CMCSA INTC ADSK DLTR CTAS"
+).split()
+
+
 def get_nasdaq100():
     for t in _wiki_tables("https://en.wikipedia.org/wiki/Nasdaq-100"):
-        for col in ("Ticker", "Symbol"):
-            if col in t.columns and len(t) > 80:
-                return [_clean(x) for x in t[col].tolist()]
+        t = t.copy()
+        if isinstance(t.columns, pd.MultiIndex):
+            t.columns = [" ".join(map(str, c)).strip() for c in t.columns]
+        for col in t.columns:
+            if str(col).strip().lower() in ("ticker", "symbol") and len(t) >= 90:
+                syms = [_clean(x) for x in t[col].tolist() if isinstance(x, str)]
+                if len(syms) >= 90:
+                    return syms
     raise ValueError("Nasdaq-100 table not found")
 
 
@@ -77,14 +91,14 @@ def get_universe(include_sp500=True, include_nasdaq=True, extra=""):
         try:
             out += get_sp500()
         except Exception as e:
-            notes.append(f"S&P500 list fetch failed ({e}); fallback used")
+            notes.append("S&P500 live list nahi mili; chhoti backup list use hui")
             out += FALLBACK
     if include_nasdaq:
         try:
             out += get_nasdaq100()
         except Exception as e:
-            notes.append(f"Nasdaq list fetch failed ({e}); fallback used")
-            out += FALLBACK
+            notes.append("Nasdaq-100 live list nahi mili; built-in Nasdaq-100 list use hui")
+            out += NASDAQ100_BACKUP
     out += get_extra()
     out += [_clean(x) for x in extra.replace(",", " ").split() if x.strip()]
     seen, uniq = set(), []
